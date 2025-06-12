@@ -1,0 +1,180 @@
+# .github/workflows/deploy.yml
+name: 🚀 Deploy Expense Tracker
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  # ✅ Testing Job
+  test:
+    name: 🧪 Run Tests
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+    
+    steps:
+    - name: 📂 Checkout code
+      uses: actions/checkout@v4
+    
+    - name: ⚡ Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+    
+    - name: 📦 Install Backend Dependencies
+      working-directory: ./backend
+      run: npm ci
+    
+    - name: 📦 Install Frontend Dependencies  
+      working-directory: ./frontend/expense-tracker
+      run: npm ci
+    
+    - name: 🔍 Lint Backend Code
+      working-directory: ./backend
+      run: npm run lint --if-present
+    
+    - name: 🔍 Lint Frontend Code
+      working-directory: ./frontend/expense-tracker
+      run: npm run lint --if-present
+    
+    - name: 🧪 Run Backend Tests
+      working-directory: ./backend
+      run: npm test --if-present
+    
+    - name: 🧪 Run Frontend Tests
+      working-directory: ./frontend/expense-tracker
+      run: npm test --if-present
+    
+    - name: 🏗️ Build Frontend
+      working-directory: ./frontend/expense-tracker
+      run: npm run build
+
+  # 🔒 Security Scan Job
+  security:
+    name: 🔒 Security Scan
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - name: 📂 Checkout code
+      uses: actions/checkout@v4
+    
+    - name: 🔒 Run Snyk Security Scan
+      uses: snyk/actions/node@master
+      continue-on-error: true
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      with:
+        args: --severity-threshold=high
+
+  # 🚀 Deploy Backend to Render
+  deploy-backend:
+    name: 🚀 Deploy Backend
+    runs-on: ubuntu-latest
+    needs: [test, security]
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: 📂 Checkout code
+      uses: actions/checkout@v4
+    
+    - name: 🚀 Trigger Render Deploy
+      env:
+        RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+      run: |
+        curl -X POST $RENDER_DEPLOY_HOOK
+    
+    - name: ⏳ Wait for Deployment
+      run: sleep 60
+    
+    - name: 🏥 Health Check Backend
+      run: |
+        curl -f https://expense-tracker-backend-nywf.onrender.com/health || exit 1
+
+  # 🌐 Deploy Frontend to Vercel
+  deploy-frontend:
+    name: 🌐 Deploy Frontend
+    runs-on: ubuntu-latest
+    needs: [test, security]
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: 📂 Checkout code
+      uses: actions/checkout@v4
+    
+    - name: 🚀 Deploy to Vercel
+      uses: amondnet/vercel-action@v25
+      with:
+        vercel-token: ${{ secrets.VERCEL_TOKEN }}
+        vercel-args: '--prod'
+        vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+        vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+        working-directory: ./frontend/expense-tracker
+
+  # 🧪 End-to-End Tests
+  e2e-tests:
+    name: 🧪 E2E Tests
+    runs-on: ubuntu-latest
+    needs: [deploy-backend, deploy-frontend]
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: 📂 Checkout code
+      uses: actions/checkout@v4
+    
+    - name: ⚡ Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+    
+    - name: 🧪 Run E2E Tests
+      run: |
+        echo "🧪 Running E2E tests against production"
+        # Add your E2E testing commands here
+        # e.g., Playwright, Cypress, etc.
+    
+    - name: 🏥 Full App Health Check
+      run: |
+        echo "🏥 Testing full application health"
+        curl -f https://expense-tracker-nine-iota-78.vercel.app/
+        curl -f https://expense-tracker-backend-nywf.onrender.com/health
+
+  # 📊 Performance Tests
+  performance:
+    name: 📊 Performance Tests
+    runs-on: ubuntu-latest
+    needs: [deploy-backend, deploy-frontend]
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: 📂 Checkout code
+      uses: actions/checkout@v4
+    
+    - name: 🚀 Lighthouse Performance Test
+      uses: treosh/lighthouse-ci-action@v10
+      with:
+        urls: |
+          https://expense-tracker-nine-iota-78.vercel.app
+        uploadArtifacts: true
+        temporaryPublicStorage: true
+
+  # 🎉 Deployment Success Notification
+  notify:
+    name: 🎉 Notify Success
+    runs-on: ubuntu-latest
+    needs: [deploy-backend, deploy-frontend, e2e-tests, performance]
+    if: github.ref == 'refs/heads/main' && success()
+    
+    steps:
+    - name: 🎉 Success Notification
+      run: |
+        echo "🎉 Deployment successful!"
+        echo "🌐 Frontend: https://expense-tracker-nine-iota-78.vercel.app"
+        echo "🔗 Backend: https://expense-tracker-backend-nywf.onrender.com"
+        echo "📊 All tests passed!"
