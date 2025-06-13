@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react'; // ADD useCallback
 import Input from '../Inputs/Input';
 import EmojiPickerPopup from '../EmojiPickerPopup';
 
@@ -16,8 +16,8 @@ const AddBudgetForm = ({ onAddBudget, editingBudget, selectedMonth, selectedYear
   const [selectedCategory, setSelectedCategory] = useState("");
   const [copyToFutureMonths, setCopyToFutureMonths] = useState(false);
 
-  // Get current month/year for display
-  const getCurrentMonthYear = () => {
+  // ✅ FIX: Wrap getCurrentMonthYear in useCallback
+  const getCurrentMonthYear = useCallback(() => {
     if (selectedMonth && selectedYear) {
       const [year, month] = selectedMonth.split('-');
       return { month, year };
@@ -27,16 +27,16 @@ const AddBudgetForm = ({ onAddBudget, editingBudget, selectedMonth, selectedYear
       month: String(now.getMonth() + 1).padStart(2, '0'),
       year: String(now.getFullYear())
     };
-  };
+  }, [selectedMonth, selectedYear]);
 
-  // Helper function to get month name
-  const getMonthName = (monthNum) => {
+  // ✅ FIX: Wrap getMonthName in useCallback
+  const getMonthName = useCallback((monthNum) => {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
                    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     return months[parseInt(monthNum) - 1];
-  };
+  }, []);
 
-  // Populate form when editing
+  // ✅ FIX: Now useEffect can include getCurrentMonthYear safely
   useEffect(() => {
     const currentPeriod = getCurrentMonthYear();
     
@@ -65,11 +65,12 @@ const AddBudgetForm = ({ onAddBudget, editingBudget, selectedMonth, selectedYear
       setSelectedCategory("");
       setCopyToFutureMonths(false);
     }
-  }, [editingBudget, selectedMonth, selectedYear]);
+  }, [editingBudget, getCurrentMonthYear]); // ✅ Now includes getCurrentMonthYear properly
 
-  const handleChange = (key, value) => {
-    setBudget({ ...budget, [key]: value });
-  };
+  // ✅ FIX: Wrap handleChange in useCallback
+  const handleChange = useCallback((key, value) => {
+    setBudget(prev => ({ ...prev, [key]: value }));
+  }, []);
 
   // Quick budget categories with default icons and colors
   const budgetCategories = [
@@ -89,18 +90,19 @@ const AddBudgetForm = ({ onAddBudget, editingBudget, selectedMonth, selectedYear
     { name: "Savings", icon: "💰", color: "#22c55e", description: "Emergency fund, investments" }
   ];
 
-  const handleCategorySelect = (category) => {
+  // ✅ FIX: Wrap handleCategorySelect in useCallback
+  const handleCategorySelect = useCallback((category) => {
     setSelectedCategory(category.name);
-    setBudget({
-      ...budget,
+    setBudget(prev => ({
+      ...prev,
       category: category.name,
-      icon: budget.icon || category.icon, // Use custom icon if set, otherwise use default
+      icon: prev.icon || category.icon, // Use custom icon if set, otherwise use default
       color: category.color
-    });
-  };
+    }));
+  }, []);
 
-  // Enhanced submission handler
-  const handleSubmit = () => {
+  // ✅ FIX: Wrap handleSubmit in useCallback
+  const handleSubmit = useCallback(() => {
     // Prevent double submission
     if (!budget.category || !budget.amount || !budget.month || !budget.year) {
       alert("Please fill in all required fields");
@@ -121,7 +123,7 @@ const AddBudgetForm = ({ onAddBudget, editingBudget, selectedMonth, selectedYear
     
     console.log("📊 Submitting budget data:", submissionData);
     onAddBudget(submissionData);
-  };
+  }, [budget, copyToFutureMonths, editingBudget, onAddBudget]);
 
   return (
     <div>
