@@ -325,6 +325,7 @@ const Budget = () => {
   });
   const [openAddBudgetModal, setOpenAddBudgetModal] = useState(false);
   const [openDeleteAlert, setOpenDeleteAlert] = useState({ show: false, data: null });
+  const [editingBudget, setEditingBudget] = useState(null);
 
   return (
     <DashboardLayout activeMenu="Budget">
@@ -342,7 +343,10 @@ const Budget = () => {
           
           <BudgetList
             budgetAnalysis={budgetAnalysis}
-            onEdit={(budget) => console.log('Edit:', budget)}
+            onEdit={(budget) => {
+              setEditingBudget(budget);
+              setOpenAddBudgetModal(true);
+            }}
             onDelete={(id) => setOpenDeleteAlert({ show: true, data: id })}
             onDownload={() => console.log('Download')}
             onDownloadAll={() => console.log('Download All')}
@@ -354,13 +358,25 @@ const Budget = () => {
           />
         </div>
 
-        {/* Add Modal without AddBudgetForm first */}
+        {/* Add AddBudgetForm */}
         <Modal
           isOpen={openAddBudgetModal}
-          onClose={() => setOpenAddBudgetModal(false)}
-          title="Add Budget"
+          onClose={() => {
+            setOpenAddBudgetModal(false);
+            setEditingBudget(null);
+          }}
+          title={editingBudget ? "Edit Budget" : "Add Budget"}
         >
-          <div>Test Modal Content</div>
+          <AddBudgetForm 
+            onAddBudget={(data) => console.log('Add budget:', data)}
+            editingBudget={editingBudget}
+            selectedMonth={selectedMonth}
+            selectedYear={selectedYear}
+            onCancel={() => {
+              setOpenAddBudgetModal(false);
+              setEditingBudget(null);
+            }}
+          />
         </Modal>
 
         <Modal
@@ -368,7 +384,11 @@ const Budget = () => {
           onClose={() => setOpenDeleteAlert({ show: false, data: null })}
           title="Delete Budget"
         >
-          <div>Test Delete Modal</div>
+          <DeleteAlert
+            content="Are you sure you want to delete this budget? This action cannot be undone."
+            onDelete={() => console.log('Delete:', openDeleteAlert.data)}
+            onCancel={() => setOpenDeleteAlert({ show: false, data: null })}
+          />
         </Modal>
       </div>
     </DashboardLayout>
