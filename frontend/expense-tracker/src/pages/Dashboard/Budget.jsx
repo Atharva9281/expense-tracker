@@ -212,6 +212,20 @@ const Budget = () => {
     setViewMode(mode);
   }, []);
 
+  // ✅ FIX: Wrap modal handlers in useCallback
+  const handleCloseBudgetModal = useCallback(() => {
+    setOpenAddBudgetModal(false);
+    setEditingBudget(null);
+  }, []);
+
+  const handleCloseDeleteAlert = useCallback(() => {
+    setOpenDeleteAlert({ show: false, data: null });
+  }, []);
+
+  const handleConfirmDelete = useCallback(() => {
+    deleteBudget(openDeleteAlert.data);
+  }, [deleteBudget, openDeleteAlert.data]);
+
   // ✅ FIX: Clean useEffect with proper dependencies
   useEffect(() => {
     fetchBudgetAnalysis();
@@ -249,14 +263,11 @@ const Budget = () => {
 
         </div>
 
-        {/* Add/Edit Budget Modal - UPDATED TO PASS SELECTED MONTH/YEAR */}
+        {/* Add/Edit Budget Modal - FIXED with useCallback handlers */}
         {openAddBudgetModal && (
           <Modal
             isOpen={openAddBudgetModal}
-            onClose={() => {
-              setOpenAddBudgetModal(false);
-              setEditingBudget(null);
-            }}
+            onClose={handleCloseBudgetModal}
             title={editingBudget ? "Edit Budget" : "Add Budget"}
           >
             <AddBudgetForm 
@@ -264,25 +275,22 @@ const Budget = () => {
               editingBudget={editingBudget}
               selectedMonth={selectedMonth}
               selectedYear={selectedYear}
-              onCancel={() => {
-                setOpenAddBudgetModal(false);
-                setEditingBudget(null);
-              }}
+              onCancel={handleCloseBudgetModal}
             />
           </Modal>
         )}
 
-        {/* Delete Confirmation Modal */}
+        {/* Delete Confirmation Modal - FIXED with useCallback handlers */}
         {openDeleteAlert.show && (
           <Modal
             isOpen={openDeleteAlert.show}
-            onClose={() => setOpenDeleteAlert({ show: false, data: null })}
+            onClose={handleCloseDeleteAlert}
             title="Delete Budget"
           >
             <DeleteAlert
               content="Are you sure you want to delete this budget? This action cannot be undone."
-              onDelete={() => deleteBudget(openDeleteAlert.data)}
-              onCancel={() => setOpenDeleteAlert({ show: false, data: null })}
+              onDelete={handleConfirmDelete}
+              onCancel={handleCloseDeleteAlert}
             />
           </Modal>
         )}

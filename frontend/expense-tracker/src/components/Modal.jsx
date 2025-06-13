@@ -8,21 +8,16 @@ const Modal = ({ children, isOpen, onClose, title }) => {
       }`}
     >
       <div className="relative p-4 w-full max-w-2xl max-h-full">
-        {/* Modal content */}
-        <div className="relative bg-white rounded-lg shadow-sm ">
-          {/* Modal header */}
-          <div className="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-gray-200 border-gray-100">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white-700 ">
-              {title}
-            </h3>
+        <div className="relative bg-white rounded-lg shadow-sm">
+          <div className="flex items-center justify-between p-4 md:p-5 border-b border-gray-100 rounded-t">
+            <h3 className="text-lg font-medium text-gray-900">{title}</h3>
             <button
               type="button"
-              className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white cursor-pointer"
               onClick={onClose}
+              className="text-gray-400 hover:text-gray-900 rounded-lg text-sm w-8 h-8 flex items-center justify-center hover:bg-gray-200"
             >
               <svg
                 className="w-3 h-3"
-                aria-hidden="true"
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
                 viewBox="0 0 14 14"
@@ -37,8 +32,6 @@ const Modal = ({ children, isOpen, onClose, title }) => {
               </svg>
             </button>
           </div>
-
-          {/* Modal body */}
           <div className="p-4 md:p-5 space-y-4">{children}</div>
         </div>
       </div>
