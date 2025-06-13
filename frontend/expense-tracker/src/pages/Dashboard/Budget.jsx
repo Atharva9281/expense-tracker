@@ -34,7 +34,7 @@ const Budget = () => {
     return new Date().getFullYear().toString();
   });
 
-  // ✅ FIX: Wrap fetchBudgetAnalysis in useCallback to prevent infinite re-renders
+  // ✅ FIX: Remove 'loading' from dependencies to prevent infinite loop
   const fetchBudgetAnalysis = useCallback(async () => {
     if (loading) return;
     setLoading(true);
@@ -61,7 +61,7 @@ const Budget = () => {
     } finally {
       setLoading(false);
     }
-  }, [loading, viewMode, selectedMonth, selectedYear]);
+  }, [viewMode, selectedMonth, selectedYear]); // ✅ REMOVED 'loading' from dependencies
 
   // ✅ FIX: Wrap handleAddBudget in useCallback to prevent recreation on every render
   const handleAddBudget = useCallback(async (budgetData) => {
