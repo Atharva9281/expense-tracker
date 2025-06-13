@@ -298,19 +298,37 @@
 
 // export default Budget;
 
-import React from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import DashboardLayout from "../../components/layouts/DashboardLayout";
 import { useUserAuth } from "../../hooks/useUserAuth";
+import axiosInstance from "../../utils/axiosInstance";
+import { API_PATHS } from "../../utils/apiPath";
+import toast from "react-hot-toast";
+// Comment out components initially
+// import Modal from "../../components/Modal";
+// import BudgetOverview from "../../components/Budget/BudgetOverview";
+// import BudgetList from "../../components/Budget/BudgetList";
+// import AddBudgetForm from "../../components/Budget/AddBudgetForm";
+// import DeleteAlert from "../../components/DeleteAlert";
 
 const Budget = () => {
   useUserAuth();
+  console.log("1. After useUserAuth");
 
+  const [budgetAnalysis, setBudgetAnalysis] = useState(null);
+  const [loading, setLoading] = useState(false);
+  console.log("2. After useState");
+
+  // Add more state gradually...
+  
   return (
     <DashboardLayout activeMenu="Budget">
       <div className="my-5 mx-auto">
         <div className="p-8 text-center">
-          <h2 className="text-2xl font-bold mb-4">Budget Feature</h2>
-          <p>Testing without any budget functionality to isolate the error.</p>
+          <h2 className="text-2xl font-bold mb-4">Budget Feature - Debug Mode</h2>
+          <p>Testing with minimal functionality.</p>
+          <p>Loading: {loading ? 'Yes' : 'No'}</p>
+          <p>Budget Analysis: {budgetAnalysis ? 'Loaded' : 'Not loaded'}</p>
         </div>
       </div>
     </DashboardLayout>
