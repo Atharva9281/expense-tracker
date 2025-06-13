@@ -3,9 +3,6 @@ import { LuTrash2, LuTrendingUp, LuTrendingDown, LuTarget, LuSettings, LuPlus, L
 import { FixedSizeList as List } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-const ITEM_HEIGHT = 240; // Height for each budget card
-const MIN_CONTAINER_HEIGHT = 300; // Minimum height for the list container
-
 const BudgetList = ({ 
   budgetAnalysis, onEdit, onDelete, onDownload, onDownloadAll,
   selectedMonth, selectedYear, viewMode, onCreateBudget 
@@ -56,11 +53,11 @@ const BudgetList = ({
     return <span className="text-lg">{budget.icon || '💰'}</span>;
   };
 
-  // ✅ FIX: Memoized callbacks to prevent re-renders
+  // Callbacks
   const handleEdit = useCallback((budget) => onEdit(budget), [onEdit]);
   const handleDelete = useCallback((budgetId) => onDelete(budgetId), [onDelete]);
 
-  // ✅ FIX: Virtual List Row Component - always used to maintain consistent hooks
+  // ✅ FIX: Virtual List Row Component - memoized to prevent re-renders
   const VirtualBudgetRow = useCallback(({ index, style }) => {
     const budget = budgets[index];
     if (!budget) return null;
@@ -156,12 +153,6 @@ const BudgetList = ({
     );
   }, [budgets, viewMode, selectedYear, handleEdit, handleDelete]);
 
-  // Calculate dynamic container height
-  const containerHeight = Math.max(
-    MIN_CONTAINER_HEIGHT,
-    Math.min(budgets.length * ITEM_HEIGHT, 600) // Max 600px
-  );
-
   return (
     <div className="card">
       {/* Header */}
@@ -227,18 +218,15 @@ const BudgetList = ({
         <div className="fixed inset-0 z-5" onClick={() => setShowDownloadDropdown(false)}></div>
       )}
       
-      {/* ✅ FIX: ALWAYS render react-window List to maintain consistent hook count */}
-      <div 
-        style={{ height: `${containerHeight}px` }} 
-        className="border border-gray-200 rounded-lg"
-      >
+      {/* ✅ CRITICAL FIX: ALWAYS render react-window to maintain consistent hook count */}
+      <div style={{ height: '500px' }} className="border border-gray-200 rounded-lg">
         <AutoSizer>
           {({ height, width }) => (
             <List
               height={height}
               width={width}
               itemCount={budgets.length}
-              itemSize={ITEM_HEIGHT}
+              itemSize={220}
               overscanCount={3}
             >
               {VirtualBudgetRow}
