@@ -84,6 +84,8 @@ jobs:
     
     - name: 🏗️ Build Frontend
       working-directory: ./frontend/expense-tracker
+      env:
+        VITE_API_URL: https://expense-tracker-backend-nywf.onrender.com
       run: npm run build
     
     - name: 🚀 Deploy to Vercel (Fresh)
@@ -105,5 +107,5 @@ jobs:
     - name: 🎉 Success Message
       run: |
         echo "🎉 Deployment successful!"
-        echo "🌐 Frontend: https://expense-tracker-nine-iota-78.vercel.app"
+        echo "🌐 Frontend: https://expense-tracker-cicd-pearl.vercel.app"
         echo "🔗 Backend: https://expense-tracker-backend-nywf.onrender.com"
