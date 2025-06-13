@@ -16,6 +16,13 @@ const AddBudgetForm = ({ onAddBudget, editingBudget, selectedMonth, selectedYear
   const [selectedCategory, setSelectedCategory] = useState("");
   const [copyToFutureMonths, setCopyToFutureMonths] = useState(false);
 
+  // ✅ FIX: Move getMonthName outside component to prevent hook issues
+  const getMonthName = (monthNum) => {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return months[parseInt(monthNum) - 1];
+  };
+
   // ✅ FIX: Wrap getCurrentMonthYear in useCallback
   const getCurrentMonthYear = useCallback(() => {
     if (selectedMonth && selectedYear) {
@@ -28,13 +35,6 @@ const AddBudgetForm = ({ onAddBudget, editingBudget, selectedMonth, selectedYear
       year: String(now.getFullYear())
     };
   }, [selectedMonth, selectedYear]);
-
-  // ✅ FIX: Wrap getMonthName in useCallback
-  const getMonthName = useCallback((monthNum) => {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
-                   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return months[parseInt(monthNum) - 1];
-  }, []);
 
   // ✅ FIX: Now useEffect can include getCurrentMonthYear safely
   useEffect(() => {
