@@ -323,12 +323,13 @@ const Budget = () => {
   const [selectedYear, setSelectedYear] = useState(() => {
     return new Date().getFullYear().toString();
   });
+  const [openAddBudgetModal, setOpenAddBudgetModal] = useState(false);
+  const [openDeleteAlert, setOpenDeleteAlert] = useState({ show: false, data: null });
 
   return (
     <DashboardLayout activeMenu="Budget">
       <div className="my-5 mx-auto">
         <div className="space-y-6">
-          {/* Try adding just this component */}
           <BudgetOverview 
             budgetAnalysis={budgetAnalysis}
             selectedMonth={selectedMonth}
@@ -337,6 +338,20 @@ const Budget = () => {
             onMonthChange={(m) => setSelectedMonth(m)}
             onYearChange={(y) => setSelectedYear(y)}
             onViewModeChange={(m) => setViewMode(m)}
+          />
+          
+          {/* Add BudgetList */}
+          <BudgetList
+            budgetAnalysis={budgetAnalysis}
+            onEdit={(budget) => console.log('Edit:', budget)}
+            onDelete={(id) => setOpenDeleteAlert({ show: true, data: id })}
+            onDownload={() => console.log('Download')}
+            onDownloadAll={() => console.log('Download All')}
+            selectedMonth={selectedMonth}
+            selectedYear={selectedYear}
+            viewMode={viewMode}
+            onMonthChange={(m) => setSelectedMonth(m)}
+            onCreateBudget={() => setOpenAddBudgetModal(true)}
           />
         </div>
       </div>
