@@ -301,6 +301,9 @@
 import React, { useState } from "react";
 import DashboardLayout from "../../components/layouts/DashboardLayout";
 import { useUserAuth } from "../../hooks/useUserAuth";
+import axiosInstance from "../../utils/axiosInstance";
+import { API_PATHS } from "../../utils/apiPath";
+import toast from "react-hot-toast";
 import Modal from "../../components/Modal";
 import BudgetOverview from "../../components/Budget/BudgetOverview";
 import BudgetList from "../../components/Budget/BudgetList";
@@ -310,41 +313,196 @@ import DeleteAlert from "../../components/DeleteAlert";
 const Budget = () => {
   useUserAuth();
 
-  useEffect(() => {
-    console.log('Budget component mounted');
-    // Don't do anything else for now
-  }, []);
-  
   const [budgetAnalysis, setBudgetAnalysis] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [openAddBudgetModal, setOpenAddBudgetModal] = useState(false);
+  const [editingBudget, setEditingBudget] = useState(null);
+  const [openDeleteAlert, setOpenDeleteAlert] = useState({
+    show: false,
+    data: null,
+  });
+  
   const [viewMode, setViewMode] = useState('monthly');
+  
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   });
+  
   const [selectedYear, setSelectedYear] = useState(() => {
     return new Date().getFullYear().toString();
   });
-  const [openAddBudgetModal, setOpenAddBudgetModal] = useState(false);
-  const [openDeleteAlert, setOpenDeleteAlert] = useState({ show: false, data: null });
-  const [editingBudget, setEditingBudget] = useState(null);
 
-  // NO useCallback, NO useEffect - just inline functions
-  
+  // Regular async function - no useCallback
+  const fetchBudgetAnalysis = async () => {
+    if (loading) return;
+    setLoading(true);
+
+    try {
+      let response;
+      
+      if (viewMode === 'monthly') {
+        const [year, month] = selectedMonth.split('-');
+        response = await axiosInstance.get(
+          `${API_PATHS.BUDGET.GET_ANALYSIS}?year=${year}&month=${month}`
+        );
+      } else {
+        response = await axiosInstance.get(
+          `${API_PATHS.BUDGET.GET_ANALYSIS}?year=${selectedYear}&viewMode=annual`
+        );
+      }
+      
+      setBudgetAnalysis(response.data);
+    } catch (error) {
+      console.error("Error fetching budget analysis:", error);
+      toast.error("Failed to fetch budget data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle add/update budget - regular function
+  const handleAddBudget = async (budgetData) => {
+    console.log("🔍 Budget data being sent:", budgetData);
+    const { category, amount, period, month, year, color, icon, copyToFutureMonths } = budgetData;
+
+    if (!category.trim()) {
+      toast.error("Category is required.");
+      return;
+    }
+
+    if (!amount || isNaN(amount) || Number(amount) <= 0) {
+      toast.error("Amount should be a valid number greater than 0.");
+      return;
+    }
+
+    if (!editingBudget && (!month || !year)) {
+      toast.error("Month and year are required.");
+      return;
+    }
+
+    try {
+      if (editingBudget) {
+        await axiosInstance.put(API_PATHS.BUDGET.UPDATE_BUDGET(editingBudget._id), {
+          category: category.trim(),
+          amount: Number(amount),
+          period,
+          color,
+          icon
+        });
+        toast.success("Budget updated successfully!");
+      } else {
+        const response = await axiosInstance.post(API_PATHS.BUDGET.ADD_BUDGET, {
+          category: category.trim(),
+          amount: Number(amount),
+          period,
+          month,
+          year,
+          color,
+          icon,
+          copyToFutureMonths
+        });
+        toast.success(response.data.message || "Budget added successfully!");
+      }
+
+      setOpenAddBudgetModal(false);
+      setEditingBudget(null);
+      fetchBudgetAnalysis();
+    } catch (error) {
+      console.error("Error adding/updating budget:", error);
+      toast.error(error.response?.data?.message || "Failed to save budget. Please try again.");
+    }
+  };
+
+  // Delete budget - regular function
+  const deleteBudget = async (id) => {
+    try {
+      await axiosInstance.delete(API_PATHS.BUDGET.DELETE_BUDGET(id));
+      toast.success("Budget deleted successfully!");
+      setOpenDeleteAlert({ show: false, data: null });
+      fetchBudgetAnalysis();
+    } catch (error) {
+      console.error("Error deleting budget:", error);
+      toast.error("Failed to delete budget. Please try again.");
+    }
+  };
+
+  // Download budget details - regular function
+  const handleDownloadBudgetDetails = async (downloadAll = false) => {
+    try {
+      let url = `${API_PATHS.BUDGET.GET_ANALYSIS.replace('/analysis', '/download')}`;
+      let filename = "budget_all_data.xlsx";
+      let successMessage = "All budget data downloaded successfully!";
+      
+      if (!downloadAll) {
+        const params = new URLSearchParams();
+        
+        if (viewMode === 'monthly') {
+          const [year, month] = selectedMonth.split('-');
+          params.append('month', month);
+          params.append('year', year);
+          params.append('viewMode', 'monthly');
+          
+          const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+          const monthName = monthNames[parseInt(month) - 1];
+          filename = `budget_${monthName.toLowerCase()}_${year}.xlsx`;
+          successMessage = `${monthName} ${year} budget data downloaded successfully!`;
+          
+        } else if (viewMode === 'annual') {
+          params.append('year', selectedYear);
+          params.append('viewMode', 'annual');
+          filename = `budget_annual_${selectedYear}.xlsx`;
+          successMessage = `${selectedYear} annual budget data downloaded successfully!`;
+        }
+        
+        if (params.toString()) {
+          url += `?${params.toString()}`;
+        }
+      }
+      
+      console.log("🔍 Budget download request:", { url, viewMode, selectedMonth, selectedYear, downloadAll });
+      
+      const response = await axiosInstance.get(url, { responseType: "blob" });
+      
+      const downloadUrl = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.setAttribute("download", filename);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+      
+      toast.success(successMessage);
+      
+    } catch (error) {
+      console.error("Error downloading budget details:", error);
+      toast.error("Failed to download budget details. Please try again.");
+    }
+  };
+
+  // Call fetchBudgetAnalysis when component mounts or dependencies change
+  React.useEffect(() => {
+    fetchBudgetAnalysis();
+  }, [viewMode, selectedMonth, selectedYear]);
+
   return (
     <DashboardLayout activeMenu="Budget">
       <div className="my-5 mx-auto">
         <div className="space-y-6">
+          
+          {/* Budget Overview with View Toggle and Date Picker */}
           <BudgetOverview 
             budgetAnalysis={budgetAnalysis}
             selectedMonth={selectedMonth}
             selectedYear={selectedYear}
             viewMode={viewMode}
-            onMonthChange={(m) => setSelectedMonth(m)}
-            onYearChange={(y) => setSelectedYear(y)}
-            onViewModeChange={(m) => setViewMode(m)}
+            onMonthChange={(newMonth) => setSelectedMonth(newMonth)}
+            onYearChange={(newYear) => setSelectedYear(newYear)}
+            onViewModeChange={(mode) => setViewMode(mode)}
           />
-          
+
+          {/* Budget List with Create Button and Download */}
           <BudgetList
             budgetAnalysis={budgetAnalysis}
             onEdit={(budget) => {
@@ -352,16 +510,21 @@ const Budget = () => {
               setOpenAddBudgetModal(true);
             }}
             onDelete={(id) => setOpenDeleteAlert({ show: true, data: id })}
-            onDownload={() => console.log('Download')}
-            onDownloadAll={() => console.log('Download All')}
+            onDownload={() => handleDownloadBudgetDetails(false)}
+            onDownloadAll={() => handleDownloadBudgetDetails(true)}
             selectedMonth={selectedMonth}
             selectedYear={selectedYear}
             viewMode={viewMode}
-            onMonthChange={(m) => setSelectedMonth(m)}
-            onCreateBudget={() => setOpenAddBudgetModal(true)}
+            onMonthChange={(newMonth) => setSelectedMonth(newMonth)}
+            onCreateBudget={() => {
+              setEditingBudget(null);
+              setOpenAddBudgetModal(true);
+            }}
           />
+
         </div>
 
+        {/* Add/Edit Budget Modal - Always rendered */}
         <Modal
           isOpen={openAddBudgetModal}
           onClose={() => {
@@ -371,11 +534,7 @@ const Budget = () => {
           title={editingBudget ? "Edit Budget" : "Add Budget"}
         >
           <AddBudgetForm 
-            onAddBudget={(data) => {
-              console.log('Add budget:', data);
-              setOpenAddBudgetModal(false);
-              // No fetchBudgetAnalysis call
-            }}
+            onAddBudget={handleAddBudget}
             editingBudget={editingBudget}
             selectedMonth={selectedMonth}
             selectedYear={selectedYear}
@@ -386,6 +545,7 @@ const Budget = () => {
           />
         </Modal>
 
+        {/* Delete Confirmation Modal - Always rendered */}
         <Modal
           isOpen={openDeleteAlert.show}
           onClose={() => setOpenDeleteAlert({ show: false, data: null })}
@@ -393,7 +553,7 @@ const Budget = () => {
         >
           <DeleteAlert
             content="Are you sure you want to delete this budget? This action cannot be undone."
-            onDelete={() => console.log('Delete:', openDeleteAlert.data)}
+            onDelete={() => deleteBudget(openDeleteAlert.data)}
             onCancel={() => setOpenDeleteAlert({ show: false, data: null })}
           />
         </Modal>
