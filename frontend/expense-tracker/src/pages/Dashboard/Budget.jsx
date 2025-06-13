@@ -327,8 +327,8 @@ const Budget = () => {
   const [openDeleteAlert, setOpenDeleteAlert] = useState({ show: false, data: null });
   const [editingBudget, setEditingBudget] = useState(null);
 
-  // Add just fetchBudgetAnalysis first
-  const fetchBudgetAnalysis = useCallback(async () => {
+  // Just use a regular async function - NO useCallback
+  const fetchBudgetAnalysis = async () => {
     if (loading) return;
     setLoading(true);
 
@@ -353,12 +353,12 @@ const Budget = () => {
     } finally {
       setLoading(false);
     }
-  }, [viewMode, selectedMonth, selectedYear]); // NO 'loading' in dependencies
+  };
 
-  // Add useEffect to fetch data
+  // useEffect without fetchBudgetAnalysis in dependency array
   useEffect(() => {
     fetchBudgetAnalysis();
-  }, [fetchBudgetAnalysis]);
+  }, [viewMode, selectedMonth, selectedYear]); // Dependencies that trigger refetch
 
   return (
     <DashboardLayout activeMenu="Budget">
