@@ -33,6 +33,8 @@ jobs:
     
     - name: 🏗️ Build Frontend
       working-directory: ./frontend/expense-tracker
+      env:
+        VITE_API_URL: https://expense-tracker-backend-nywf.onrender.com
       run: npm run build
     
     - name: ✅ Build Success
