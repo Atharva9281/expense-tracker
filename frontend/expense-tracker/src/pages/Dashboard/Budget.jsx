@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import DashboardLayout from "../../components/layouts/DashboardLayout";
 import { useUserAuth } from "../../hooks/useUserAuth";
 import axiosInstance from "../../utils/axiosInstance";
@@ -34,8 +34,8 @@ const Budget = () => {
     return new Date().getFullYear().toString();
   });
 
-  // Fetch budget analysis (monthly or annual)
-  const fetchBudgetAnalysis = async () => {
+  // ✅ FIX: Wrap fetchBudgetAnalysis in useCallback to prevent infinite re-renders
+  const fetchBudgetAnalysis = useCallback(async () => {
     if (loading) return;
     setLoading(true);
 
@@ -61,10 +61,10 @@ const Budget = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [loading, viewMode, selectedMonth, selectedYear]);
 
-  // Add or update budget - UPDATED TO HANDLE MONTH/YEAR
-  const handleAddBudget = async (budgetData) => {
+  // ✅ FIX: Wrap handleAddBudget in useCallback to prevent recreation on every render
+  const handleAddBudget = useCallback(async (budgetData) => {
     console.log("🔍 Budget data being sent:", budgetData);
     const { category, amount, period, month, year, color, icon, copyToFutureMonths } = budgetData;
 
@@ -117,10 +117,10 @@ const Budget = () => {
       console.error("Error adding/updating budget:", error);
       toast.error(error.response?.data?.message || "Failed to save budget. Please try again.");
     }
-  };
+  }, [editingBudget, fetchBudgetAnalysis]);
 
-  // Delete budget
-  const deleteBudget = async (id) => {
+  // ✅ FIX: Wrap deleteBudget in useCallback
+  const deleteBudget = useCallback(async (id) => {
     try {
       await axiosInstance.delete(API_PATHS.BUDGET.DELETE_BUDGET(id));
       toast.success("Budget deleted successfully!");
@@ -130,22 +130,22 @@ const Budget = () => {
       console.error("Error deleting budget:", error);
       toast.error("Failed to delete budget. Please try again.");
     }
-  };
+  }, [fetchBudgetAnalysis]);
 
-  // Handle edit budget
-  const handleEditBudget = (budget) => {
+  // ✅ FIX: Wrap handleEditBudget in useCallback
+  const handleEditBudget = useCallback((budget) => {
     setEditingBudget(budget);
     setOpenAddBudgetModal(true);
-  };
+  }, []);
 
-  // Handle add budget button
-  const handleAddBudgetClick = () => {
+  // ✅ FIX: Wrap handleAddBudgetClick in useCallback
+  const handleAddBudgetClick = useCallback(() => {
     setEditingBudget(null);
     setOpenAddBudgetModal(true);
-  };
+  }, []);
 
-  // NEW: Smart Context-Aware Budget Download
-  const handleDownloadBudgetDetails = async (downloadAll = false) => {
+  // ✅ FIX: Wrap handleDownloadBudgetDetails in useCallback
+  const handleDownloadBudgetDetails = useCallback(async (downloadAll = false) => {
     try {
       let url = `${API_PATHS.BUDGET.GET_ANALYSIS.replace('/analysis', '/download')}`;
       let filename = "budget_all_data.xlsx";
@@ -197,27 +197,25 @@ const Budget = () => {
       console.error("Error downloading budget details:", error);
       toast.error("Failed to download budget details. Please try again.");
     }
-  };
+  }, [viewMode, selectedMonth, selectedYear]);
 
-  // Handle month change
-  const handleMonthChange = (newMonth) => {
+  // ✅ FIX: Wrap handle functions in useCallback
+  const handleMonthChange = useCallback((newMonth) => {
     setSelectedMonth(newMonth);
-  };
+  }, []);
 
-  // Handle year change (for annual view)
-  const handleYearChange = (newYear) => {
+  const handleYearChange = useCallback((newYear) => {
     setSelectedYear(newYear);
-  };
+  }, []);
 
-  // Handle view mode change
-  const handleViewModeChange = (mode) => {
+  const handleViewModeChange = useCallback((mode) => {
     setViewMode(mode);
-  };
+  }, []);
 
-  // Effect for data fetching
+  // ✅ FIX: Clean useEffect with proper dependencies
   useEffect(() => {
     fetchBudgetAnalysis();
-  }, [selectedMonth, selectedYear, viewMode]);
+  }, [fetchBudgetAnalysis]);
 
   return (
     <DashboardLayout activeMenu="Budget">
