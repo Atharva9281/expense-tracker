@@ -1,3 +1,5 @@
+import { API_CONFIG } from '../config/config.js';
+
 export const BASE_URL = API_CONFIG.BASE_URL;
 
 export const API_PATHS = {
