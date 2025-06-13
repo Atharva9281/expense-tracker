@@ -35,7 +35,9 @@ jobs:
       working-directory: ./frontend/expense-tracker
       env:
         VITE_API_URL: https://expense-tracker-backend-nywf.onrender.com
-      run: npm run build
+      run: |
+        echo "🔍 Debug: VITE_API_URL is set to: $VITE_API_URL"
+        npm run build
     
     - name: ✅ Build Success
       run: echo "🎉 Build completed successfully!"
@@ -86,13 +88,17 @@ jobs:
       working-directory: ./frontend/expense-tracker
       env:
         VITE_API_URL: https://expense-tracker-backend-nywf.onrender.com
-      run: npm run build
+      run: |
+        echo "🔍 Debug: VITE_API_URL is set to: $VITE_API_URL"
+        npm run build
     
     - name: 🚀 Deploy to Vercel (Fresh)
       working-directory: ./frontend/expense-tracker
       env:
         VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        VITE_API_URL: https://expense-tracker-backend-nywf.onrender.com
       run: |
+        echo "🔍 Debug: VITE_API_URL during deploy: $VITE_API_URL"
         echo "Deploying fresh without project linking..."
         npx vercel --token $VERCEL_TOKEN --prod --yes --name expense-tracker-cicd
 
