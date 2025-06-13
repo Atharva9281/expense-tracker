@@ -71,6 +71,9 @@ jobs:
     needs: build-and-test
     if: github.ref == 'refs/heads/main'
     
+    env:
+      VITE_API_URL: https://expense-tracker-backend-nywf.onrender.com
+    
     steps:
     - name: 📂 Checkout code
       uses: actions/checkout@v4
@@ -86,8 +89,6 @@ jobs:
     
     - name: 🏗️ Build Frontend
       working-directory: ./frontend/expense-tracker
-      env:
-        VITE_API_URL: https://expense-tracker-backend-nywf.onrender.com
       run: |
         echo "🔍 Debug: VITE_API_URL is set to: $VITE_API_URL"
         npm run build
@@ -96,7 +97,6 @@ jobs:
       working-directory: ./frontend/expense-tracker
       env:
         VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-        VITE_API_URL: https://expense-tracker-backend-nywf.onrender.com
       run: |
         echo "🔍 Debug: VITE_API_URL during deploy: $VITE_API_URL"
         echo "Deploying fresh without project linking..."
