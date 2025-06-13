@@ -3,7 +3,8 @@ import { LuTrash2, LuTrendingUp, LuTrendingDown, LuTarget, LuSettings, LuPlus, L
 import { FixedSizeList as List } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-const VIRTUAL_SCROLLING_THRESHOLD = 20;
+const ITEM_HEIGHT = 240; // Height for each budget card
+const MIN_CONTAINER_HEIGHT = 300; // Minimum height for the list container
 
 const BudgetList = ({ 
   budgetAnalysis, onEdit, onDelete, onDownload, onDownloadAll,
@@ -32,7 +33,6 @@ const BudgetList = ({
   }
 
   const budgets = budgetAnalysis.budgets;
-  const shouldUseVirtualScrolling = budgets.length >= VIRTUAL_SCROLLING_THRESHOLD;
 
   // Helper functions
   const getMonthName = (monthNum) => ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][parseInt(monthNum) - 1];
@@ -56,108 +56,111 @@ const BudgetList = ({
     return <span className="text-lg">{budget.icon || '💰'}</span>;
   };
 
-  // Callbacks
+  // ✅ FIX: Memoized callbacks to prevent re-renders
   const handleEdit = useCallback((budget) => onEdit(budget), [onEdit]);
   const handleDelete = useCallback((budgetId) => onDelete(budgetId), [onDelete]);
 
-  // Budget Card Component
-  const BudgetCard = ({ budget, style }) => {
+  // ✅ FIX: Virtual List Row Component - always used to maintain consistent hooks
+  const VirtualBudgetRow = useCallback(({ index, style }) => {
+    const budget = budgets[index];
+    if (!budget) return null;
+
     const StatusIcon = getStatusIcon(budget.status);
     const progressWidth = Math.min((budget.spent / budget.amount) * 100, 100);
     
-    const cardContent = (
-      <div className="group relative p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex items-center gap-3">
-            <div 
-              className="w-10 h-10 rounded-full flex items-center justify-center border-2"
-              style={{ 
-                backgroundColor: budget.color + '20', 
-                borderColor: budget.color + '40',
-                color: budget.color 
-              }}
-            >
-              {renderBudgetIcon(budget)}
+    return (
+      <div style={style} className="px-2 pb-4">
+        <div className="group relative p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+          <div className="flex items-start justify-between mb-3">
+            <div className="flex items-center gap-3">
+              <div 
+                className="w-10 h-10 rounded-full flex items-center justify-center border-2"
+                style={{ 
+                  backgroundColor: budget.color + '20', 
+                  borderColor: budget.color + '40',
+                  color: budget.color 
+                }}
+              >
+                {renderBudgetIcon(budget)}
+              </div>
+              <div>
+                <h6 className="font-medium text-gray-800">{budget.category}</h6>
+                <span className="text-xs text-gray-500 capitalize">
+                  {budget.month && budget.year ? 
+                    `${getMonthName(budget.month)} ${budget.year} • ${budget.period}` :
+                    `${viewMode === 'monthly' ? 'Monthly' : 'Annual'} • ${budget.period}`
+                  }
+                </span>
+              </div>
             </div>
-            <div>
-              <h6 className="font-medium text-gray-800">{budget.category}</h6>
-              <span className="text-xs text-gray-500 capitalize">
-                {budget.month && budget.year ? 
-                  `${getMonthName(budget.month)} ${budget.year} • ${budget.period}` :
-                  `${viewMode === 'monthly' ? 'Monthly' : 'Annual'} • ${budget.period}`
-                }
+            
+            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button onClick={() => handleEdit(budget)} className="p-1 text-gray-400 hover:text-blue-500">
+                <LuSettings size={14} />
+              </button>
+              <button onClick={() => handleDelete(budget._id)} className="p-1 text-gray-400 hover:text-red-500">
+                <LuTrash2 size={14} />
+              </button>
+            </div>
+          </div>
+          
+          {/* Amount & Status */}
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm text-gray-600">
+              ${budget.spent} / ${budget.amount}
+              {viewMode === 'annual' && budget.monthlyAmount && (
+                <span className="text-xs text-gray-400 block">(${budget.monthlyAmount}/month × 12)</span>
+              )}
+            </span>
+            <div className="flex items-center gap-1">
+              <StatusIcon className={`text-sm ${getStatusColor(budget.status)}`} />
+              <span className={`text-sm font-medium ${getStatusColor(budget.status)}`}>
+                {budget.isOverBudget ? `+${Math.abs(budget.remaining)}` : `${budget.remaining} left`}
               </span>
             </div>
           </div>
           
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button onClick={() => handleEdit(budget)} className="p-1 text-gray-400 hover:text-blue-500">
-              <LuSettings size={14} />
-            </button>
-            <button onClick={() => handleDelete(budget._id)} className="p-1 text-gray-400 hover:text-red-500">
-              <LuTrash2 size={14} />
-            </button>
+          {/* Progress Bar */}
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div 
+              className={`h-2 rounded-full transition-all duration-300 ${getProgressBarColor(budget.status)}`}
+              style={{ width: `${progressWidth}%` }}
+            />
           </div>
-        </div>
-        
-        {/* Amount & Status */}
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-sm text-gray-600">
-            ${budget.spent} / ${budget.amount}
-            {viewMode === 'annual' && budget.monthlyAmount && (
-              <span className="text-xs text-gray-400 block">(${budget.monthlyAmount}/month × 12)</span>
-            )}
-          </span>
-          <div className="flex items-center gap-1">
-            <StatusIcon className={`text-sm ${getStatusColor(budget.status)}`} />
-            <span className={`text-sm font-medium ${getStatusColor(budget.status)}`}>
-              {budget.isOverBudget ? `+${Math.abs(budget.remaining)}` : `${budget.remaining} left`}
+          
+          {/* Percentage */}
+          <div className="mt-2 text-right">
+            <span className="text-xs text-gray-500">
+              {Math.round(budget.percentage)}% used{viewMode === 'annual' && ` in ${selectedYear}`}
             </span>
           </div>
-        </div>
-        
-        {/* Progress Bar */}
-        <div className="w-full bg-gray-200 rounded-full h-2">
-          <div 
-            className={`h-2 rounded-full transition-all duration-300 ${getProgressBarColor(budget.status)}`}
-            style={{ width: `${progressWidth}%` }}
-          />
-        </div>
-        
-        {/* Percentage */}
-        <div className="mt-2 text-right">
-          <span className="text-xs text-gray-500">
-            {Math.round(budget.percentage)}% used{viewMode === 'annual' && ` in ${selectedYear}`}
-          </span>
-        </div>
 
-        {/* Monthly Breakdown for Annual View */}
-        {viewMode === 'annual' && budget.monthlyBreakdown && (
-          <div className="mt-3 pt-3 border-t border-gray-200">
-            <div className="text-xs font-medium text-gray-600 mb-2">Monthly Breakdown</div>
-            <div className="grid grid-cols-6 gap-1">
-              {budget.monthlyBreakdown.slice(0, 12).map((month) => (
-                <div key={month.month} className="text-center">
-                  <div className="text-xs text-gray-500">{month.monthName.slice(0, 3)}</div>
-                  <div className={`text-xs font-medium ${month.spent > 0 ? 'text-green-600' : 'text-gray-400'}`}>
-                    ${month.spent}
+          {/* Monthly Breakdown for Annual View */}
+          {viewMode === 'annual' && budget.monthlyBreakdown && (
+            <div className="mt-3 pt-3 border-t border-gray-200">
+              <div className="text-xs font-medium text-gray-600 mb-2">Monthly Breakdown</div>
+              <div className="grid grid-cols-6 gap-1">
+                {budget.monthlyBreakdown.slice(0, 12).map((month) => (
+                  <div key={month.month} className="text-center">
+                    <div className="text-xs text-gray-500">{month.monthName.slice(0, 3)}</div>
+                    <div className={`text-xs font-medium ${month.spent > 0 ? 'text-green-600' : 'text-gray-400'}`}>
+                      ${month.spent}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     );
+  }, [budgets, viewMode, selectedYear, handleEdit, handleDelete]);
 
-    return style ? <div style={style} className="px-2 pb-4">{cardContent}</div> : cardContent;
-  };
-
-  // Virtual List Row Component
-  const VirtualBudgetRow = ({ index, style }) => {
-    const budget = budgets[index];
-    return budget ? <BudgetCard budget={budget} style={style} /> : null;
-  };
+  // Calculate dynamic container height
+  const containerHeight = Math.max(
+    MIN_CONTAINER_HEIGHT,
+    Math.min(budgets.length * ITEM_HEIGHT, 600) // Max 600px
+  );
 
   return (
     <div className="card">
@@ -224,30 +227,25 @@ const BudgetList = ({
         <div className="fixed inset-0 z-5" onClick={() => setShowDownloadDropdown(false)}></div>
       )}
       
-      {/* Budget Display */}
-      {shouldUseVirtualScrolling ? (
-        <div style={{ height: '600px' }} className="border border-gray-200 rounded-lg">
-          <AutoSizer>
-            {({ height, width }) => (
-              <List
-                height={height}
-                width={width}
-                itemCount={budgets.length}
-                itemSize={220}
-                overscanCount={3}
-              >
-                {VirtualBudgetRow}
-              </List>
-            )}
-          </AutoSizer>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {budgets.map((budget) => (
-            <BudgetCard key={budget._id} budget={budget} />
-          ))}
-        </div>
-      )}
+      {/* ✅ FIX: ALWAYS render react-window List to maintain consistent hook count */}
+      <div 
+        style={{ height: `${containerHeight}px` }} 
+        className="border border-gray-200 rounded-lg"
+      >
+        <AutoSizer>
+          {({ height, width }) => (
+            <List
+              height={height}
+              width={width}
+              itemCount={budgets.length}
+              itemSize={ITEM_HEIGHT}
+              overscanCount={3}
+            >
+              {VirtualBudgetRow}
+            </List>
+          )}
+        </AutoSizer>
+      </div>
     </div>
   );
 };
