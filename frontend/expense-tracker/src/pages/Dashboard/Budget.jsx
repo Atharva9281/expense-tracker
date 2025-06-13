@@ -327,6 +327,39 @@ const Budget = () => {
   const [openDeleteAlert, setOpenDeleteAlert] = useState({ show: false, data: null });
   const [editingBudget, setEditingBudget] = useState(null);
 
+  // Add just fetchBudgetAnalysis first
+  const fetchBudgetAnalysis = useCallback(async () => {
+    if (loading) return;
+    setLoading(true);
+
+    try {
+      let response;
+      
+      if (viewMode === 'monthly') {
+        const [year, month] = selectedMonth.split('-');
+        response = await axiosInstance.get(
+          `${API_PATHS.BUDGET.GET_ANALYSIS}?year=${year}&month=${month}`
+        );
+      } else {
+        response = await axiosInstance.get(
+          `${API_PATHS.BUDGET.GET_ANALYSIS}?year=${selectedYear}&viewMode=annual`
+        );
+      }
+      
+      setBudgetAnalysis(response.data);
+    } catch (error) {
+      console.error("Error fetching budget analysis:", error);
+      toast.error("Failed to fetch budget data");
+    } finally {
+      setLoading(false);
+    }
+  }, [viewMode, selectedMonth, selectedYear]); // NO 'loading' in dependencies
+
+  // Add useEffect to fetch data
+  useEffect(() => {
+    fetchBudgetAnalysis();
+  }, [fetchBudgetAnalysis]);
+
   return (
     <DashboardLayout activeMenu="Budget">
       <div className="my-5 mx-auto">
@@ -358,7 +391,6 @@ const Budget = () => {
           />
         </div>
 
-        {/* Add AddBudgetForm */}
         <Modal
           isOpen={openAddBudgetModal}
           onClose={() => {
@@ -368,7 +400,11 @@ const Budget = () => {
           title={editingBudget ? "Edit Budget" : "Add Budget"}
         >
           <AddBudgetForm 
-            onAddBudget={(data) => console.log('Add budget:', data)}
+            onAddBudget={(data) => {
+              console.log('Add budget:', data);
+              setOpenAddBudgetModal(false);
+              fetchBudgetAnalysis();
+            }}
             editingBudget={editingBudget}
             selectedMonth={selectedMonth}
             selectedYear={selectedYear}
