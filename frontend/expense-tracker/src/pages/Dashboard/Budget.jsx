@@ -307,6 +307,11 @@ import BudgetList from "../../components/Budget/BudgetList";
 import AddBudgetForm from "../../components/Budget/AddBudgetForm";
 import DeleteAlert from "../../components/DeleteAlert";
 
+useEffect(() => {
+  console.log('Budget component mounted');
+  // Don't do anything else for now
+}, []);
+
 const Budget = () => {
   useUserAuth();
   
