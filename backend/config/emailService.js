@@ -56,6 +56,15 @@ const transporter = createTransporter();
 // FIXED: Environment-aware verification email
 const sendVerificationEmail = async (email, verificationToken) => {
   try {
+    console.log('🔍 Email Debug Info:', {
+      nodeEnv: process.env.NODE_ENV,
+      emailFrom: process.env.EMAIL_FROM,
+      resendKey: process.env.RESEND_API_KEY ? 'Set' : 'Not Set',
+      frontendUrl: emailConfig.frontendUrl,
+      service: emailConfig.service,
+      host: emailConfig.host,
+      recipient: email,
+    });
     // Dynamic URL based on environment
     const verificationUrl = `${emailConfig.frontendUrl}/verify-email/${verificationToken}`;
     
@@ -130,12 +139,24 @@ const sendVerificationEmail = async (email, verificationToken) => {
       `
     };
 
+    console.log('📧 Attempting to send email with options:', {
+      from: mailOptions.from,
+      to: mailOptions.to,
+      subject: mailOptions.subject
+    });
+
     const result = await transporter.sendMail(mailOptions);
     console.log('✅ Verification email sent successfully:', result.messageId);
     return { success: true, messageId: result.messageId };
     
   } catch (error) {
-    console.error('❌ Failed to send verification email:', error);
+    // console.error('❌ Failed to send verification email:', error);
+    console.error('❌ Email error details:', {
+      message: error.message,
+      code: error.code,
+      response: error.response,
+      stack: error.stack
+    });
     throw new Error('Failed to send verification email');
   }
 };
