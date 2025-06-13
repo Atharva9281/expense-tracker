@@ -298,12 +298,9 @@
 
 // export default Budget;
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState } from "react";
 import DashboardLayout from "../../components/layouts/DashboardLayout";
 import { useUserAuth } from "../../hooks/useUserAuth";
-import axiosInstance from "../../utils/axiosInstance";
-import { API_PATHS } from "../../utils/apiPath";
-import toast from "react-hot-toast";
 import Modal from "../../components/Modal";
 import BudgetOverview from "../../components/Budget/BudgetOverview";
 import BudgetList from "../../components/Budget/BudgetList";
@@ -327,39 +324,8 @@ const Budget = () => {
   const [openDeleteAlert, setOpenDeleteAlert] = useState({ show: false, data: null });
   const [editingBudget, setEditingBudget] = useState(null);
 
-  // Just use a regular async function - NO useCallback
-  const fetchBudgetAnalysis = async () => {
-    if (loading) return;
-    setLoading(true);
-
-    try {
-      let response;
-      
-      if (viewMode === 'monthly') {
-        const [year, month] = selectedMonth.split('-');
-        response = await axiosInstance.get(
-          `${API_PATHS.BUDGET.GET_ANALYSIS}?year=${year}&month=${month}`
-        );
-      } else {
-        response = await axiosInstance.get(
-          `${API_PATHS.BUDGET.GET_ANALYSIS}?year=${selectedYear}&viewMode=annual`
-        );
-      }
-      
-      setBudgetAnalysis(response.data);
-    } catch (error) {
-      console.error("Error fetching budget analysis:", error);
-      toast.error("Failed to fetch budget data");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // useEffect without fetchBudgetAnalysis in dependency array
-  useEffect(() => {
-    fetchBudgetAnalysis();
-  }, [viewMode, selectedMonth, selectedYear]); // Dependencies that trigger refetch
-
+  // NO useCallback, NO useEffect - just inline functions
+  
   return (
     <DashboardLayout activeMenu="Budget">
       <div className="my-5 mx-auto">
@@ -403,7 +369,7 @@ const Budget = () => {
             onAddBudget={(data) => {
               console.log('Add budget:', data);
               setOpenAddBudgetModal(false);
-              fetchBudgetAnalysis();
+              // No fetchBudgetAnalysis call
             }}
             editingBudget={editingBudget}
             selectedMonth={selectedMonth}
