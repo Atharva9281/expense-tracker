@@ -340,7 +340,6 @@ const Budget = () => {
             onViewModeChange={(m) => setViewMode(m)}
           />
           
-          {/* Add BudgetList */}
           <BudgetList
             budgetAnalysis={budgetAnalysis}
             onEdit={(budget) => console.log('Edit:', budget)}
@@ -354,6 +353,23 @@ const Budget = () => {
             onCreateBudget={() => setOpenAddBudgetModal(true)}
           />
         </div>
+
+        {/* Add Modal without AddBudgetForm first */}
+        <Modal
+          isOpen={openAddBudgetModal}
+          onClose={() => setOpenAddBudgetModal(false)}
+          title="Add Budget"
+        >
+          <div>Test Modal Content</div>
+        </Modal>
+
+        <Modal
+          isOpen={openDeleteAlert.show}
+          onClose={() => setOpenDeleteAlert({ show: false, data: null })}
+          title="Delete Budget"
+        >
+          <div>Test Delete Modal</div>
+        </Modal>
       </div>
     </DashboardLayout>
   );
