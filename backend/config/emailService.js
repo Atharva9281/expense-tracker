@@ -1,21 +1,6 @@
-// backend/config/emailService.js - Complete Working Solution
+// backend/config/emailService.js - Fixed Working Version
 
-// Try different import methods to ensure compatibility
-let nodemailer;
-try {
-  nodemailer = require('nodemailer');
-  console.log('✅ Nodemailer imported successfully');
-} catch (error) {
-  console.error('❌ Failed to import nodemailer:', error);
-  // Try alternative import
-  try {
-    nodemailer = require('nodemailer').default;
-    console.log('✅ Nodemailer imported via default export');
-  } catch (err) {
-    console.error('❌ Failed all import attempts for nodemailer');
-    throw new Error('Nodemailer module not found');
-  }
-}
+const nodemailer = require('nodemailer');
 
 // Get frontend URL based on environment
 const getFrontendUrl = () => {
@@ -32,28 +17,12 @@ const sendVerificationEmail = async (email, verificationToken) => {
     console.log('📧 Recipient:', email);
     console.log('🔐 Token:', verificationToken);
     
-    // Check if nodemailer is available
-    if (!nodemailer || typeof nodemailer.createTransporter !== 'function') {
-      console.error('❌ Nodemailer not properly loaded');
-      console.log('Nodemailer object:', nodemailer);
-      console.log('Available methods:', Object.keys(nodemailer || {}));
-      
-      // Fallback: Return success but log the issue
-      console.warn('⚠️ Email service unavailable - user created without email verification');
-      return {
-        success: true,
-        warning: 'Email service temporarily unavailable',
-        verificationUrl: `${getFrontendUrl()}/verify-email/${verificationToken}`
-      };
-    }
-
     // Check environment variables
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
       console.error('❌ Email credentials not configured');
-      return {
-        success: false,
-        error: 'Email service not configured'
-      };
+      console.log('EMAIL_USER:', process.env.EMAIL_USER || 'NOT SET');
+      console.log('EMAIL_PASS:', process.env.EMAIL_PASS ? 'SET' : 'NOT SET');
+      throw new Error('Email credentials not configured in environment variables');
     }
 
     console.log('📋 Email configuration:', {
@@ -63,43 +32,35 @@ const sendVerificationEmail = async (email, verificationToken) => {
     });
 
     // Create transporter
-    let transporter;
-    try {
-      transporter = nodemailer.createTransporter({
-        service: 'gmail',
-        auth: {
-          user: process.env.EMAIL_USER,
-          pass: process.env.EMAIL_PASS
-        },
-        debug: true,
-        logger: true
-      });
-      console.log('✅ Transporter created successfully');
-    } catch (err) {
-      console.error('❌ Failed to create transporter:', err);
-      return {
-        success: false,
-        error: 'Failed to initialize email service'
-      };
-    }
+    console.log('🔧 Creating Gmail transporter...');
+    const transporter = nodemailer.createTransporter({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      }
+    });
+    console.log('✅ Transporter created successfully');
 
     // Verify connection
+    console.log('🔌 Verifying Gmail connection...');
     try {
       await transporter.verify();
-      console.log('✅ Gmail connection verified');
+      console.log('✅ Gmail connection verified successfully');
     } catch (verifyError) {
-      console.error('❌ Gmail verification failed:', verifyError);
+      console.error('❌ Gmail verification failed:', verifyError.message);
       console.error('Error code:', verifyError.code);
       console.error('Response:', verifyError.response);
       
       if (verifyError.code === 'EAUTH') {
-        console.error('🔐 Authentication issue - check app password');
+        console.error('🔐 Authentication failed. Check:');
+        console.error('1. EMAIL_USER is correct:', process.env.EMAIL_USER);
+        console.error('2. EMAIL_PASS is an app password (not regular password)');
+        console.error('3. 2FA is enabled on Google account');
+        console.error('4. App password is valid and not revoked');
       }
       
-      return {
-        success: false,
-        error: 'Email authentication failed'
-      };
+      throw verifyError;
     }
 
     const frontendUrl = getFrontendUrl();
@@ -176,51 +137,46 @@ const sendVerificationEmail = async (email, verificationToken) => {
       `
     };
 
-    console.log('📨 Attempting to send email...');
+    console.log('📨 Sending email to:', email);
+    console.log('📨 From:', process.env.EMAIL_USER);
     
-    try {
-      const result = await transporter.sendMail(mailOptions);
-      console.log('✅ Email sent successfully!');
-      console.log('📧 Message ID:', result.messageId);
-      console.log('📧 Response:', result.response);
-      
-      return { 
-        success: true, 
-        messageId: result.messageId,
-        response: result.response 
-      };
-    } catch (sendError) {
-      console.error('❌ Failed to send email:', sendError);
-      console.error('Error code:', sendError.code);
-      console.error('Response:', sendError.response);
-      
-      return {
-        success: false,
-        error: sendError.message
-      };
-    }
+    const result = await transporter.sendMail(mailOptions);
+    
+    console.log('✅ Email sent successfully!');
+    console.log('📧 Message ID:', result.messageId);
+    console.log('📧 Response:', result.response);
+    
+    return { 
+      success: true, 
+      messageId: result.messageId,
+      response: result.response 
+    };
     
   } catch (error) {
-    console.error('❌ Unexpected error in sendVerificationEmail:', error);
-    console.error('Stack trace:', error.stack);
+    console.error('❌ Email sending failed!');
+    console.error('Error message:', error.message);
+    console.error('Error code:', error.code);
+    console.error('Error response:', error.response);
+    console.error('Full error:', error);
     
-    // Return failure but don't crash the registration
-    return {
-      success: false,
-      error: error.message,
-      verificationUrl: `${getFrontendUrl()}/verify-email/${verificationToken}`
-    };
+    // More specific error messages
+    if (error.code === 'EAUTH') {
+      console.error('🔐 Gmail authentication failed');
+      console.error('Make sure you are using an App Password, not your regular password');
+      console.error('Generate one at: https://myaccount.google.com/apppasswords');
+    } else if (error.code === 'ESOCKET') {
+      console.error('🌐 Network connection issue');
+    } else if (error.responseCode === 535) {
+      console.error('🔐 Invalid credentials - check EMAIL_USER and EMAIL_PASS');
+    }
+    
+    throw new Error('Failed to send verification email: ' + error.message);
   }
 };
 
 // Send password reset email
 const sendPasswordResetEmail = async (email, resetToken) => {
   try {
-    if (!nodemailer || typeof nodemailer.createTransporter !== 'function') {
-      console.error('❌ Nodemailer not available for password reset');
-      return { success: false, error: 'Email service unavailable' };
-    }
-
     const transporter = nodemailer.createTransporter({
       service: 'gmail',
       auth: {
@@ -253,7 +209,7 @@ const sendPasswordResetEmail = async (email, resetToken) => {
     return { success: true };
   } catch (error) {
     console.error('Failed to send password reset email:', error);
-    return { success: false, error: error.message };
+    throw error;
   }
 };
 
@@ -268,7 +224,7 @@ const testEmailConfiguration = async () => {
       console.log('✅ Email test successful!');
       return true;
     } else {
-      console.error('❌ Email test failed:', result.error);
+      console.error('❌ Email test failed');
       return false;
     }
   } catch (error) {
@@ -277,7 +233,6 @@ const testEmailConfiguration = async () => {
   }
 };
 
-// Export functions
 module.exports = {
   sendVerificationEmail,
   sendPasswordResetEmail,
