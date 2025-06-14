@@ -1,17 +1,9 @@
-// backend/config/emailService.js - Complete Gmail Implementation
+// backend/config/emailService.js - Complete Gmail Implementation with Fix
 
 const nodemailer = require('nodemailer');
 
-// Create Gmail transporter
-const createGmailTransporter = () => {
-  return nodemailer.createTransporter({
-    service: 'gmail',
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS
-    }
-  });
-};
+// Debug logging to check nodemailer
+console.log('📧 Checking nodemailer import...');
 
 // Get frontend URL based on environment
 const getFrontendUrl = () => {
@@ -21,12 +13,18 @@ const getFrontendUrl = () => {
   return process.env.FRONTEND_URL || 'http://localhost:5173';
 };
 
-// Create transporter instance
-const transporter = createGmailTransporter();
-
 // Send verification email
 const sendVerificationEmail = async (email, verificationToken) => {
   try {
+    // Create transporter inside the function to avoid initialization errors
+    const transporter = nodemailer.createTransporter({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      }
+    });
+
     const frontendUrl = getFrontendUrl();
     const verificationUrl = `${frontendUrl}/verify-email/${verificationToken}`;
     
@@ -123,6 +121,15 @@ const sendVerificationEmail = async (email, verificationToken) => {
 // Send password reset email (for future use)
 const sendPasswordResetEmail = async (email, resetToken) => {
   try {
+    // Create transporter inside the function
+    const transporter = nodemailer.createTransporter({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      }
+    });
+
     const frontendUrl = getFrontendUrl();
     const resetUrl = `${frontendUrl}/reset-password/${resetToken}`;
     
@@ -154,6 +161,14 @@ const sendPasswordResetEmail = async (email, resetToken) => {
 // Test email configuration
 const testEmailConfiguration = async () => {
   try {
+    const transporter = nodemailer.createTransporter({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      }
+    });
+    
     await transporter.verify();
     console.log('✅ Gmail configuration is valid');
     return true;
