@@ -1,78 +1,41 @@
-// backend/config/emailService.js - UPDATED with environment-aware URLs and Resend
+// backend/config/emailService.js - Complete Gmail Implementation
 
 const nodemailer = require('nodemailer');
 
-// Environment-aware configuration
-const getEmailConfig = () => {
-  const isProduction = process.env.NODE_ENV === 'production';
-  
-  if (isProduction) {
-    // Production: Use Resend
-    return {
-      service: 'resend',
-      host: 'smtp.resend.com',
-      port: 587,
-      secure: false,
-      auth: {
-        user: 'resend',
-        pass: process.env.RESEND_API_KEY // Get this from Resend dashboard
-      },
-      frontendUrl: process.env.FRONTEND_URL || 'https://yourapp.vercel.app'
-    };
-  } else {
-    // Development: Use Gmail (or Resend for testing)
-    return {
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-      },
-      frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173'
-    };
-  }
+// Create Gmail transporter
+const createGmailTransporter = () => {
+  return nodemailer.createTransporter({
+    service: 'gmail',
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS
+    }
+  });
 };
 
-const emailConfig = getEmailConfig();
-
-// Create transporter based on environment
-const createTransporter = () => {
-  if (emailConfig.service === 'resend') {
-    return nodemailer.createTransport({
-      host: emailConfig.host,
-      port: emailConfig.port,
-      secure: emailConfig.secure,
-      auth: emailConfig.auth
-    });
-  } else {
-    return nodemailer.createTransport({
-      service: emailConfig.service,
-      auth: emailConfig.auth
-    });
+// Get frontend URL based on environment
+const getFrontendUrl = () => {
+  if (process.env.NODE_ENV === 'production') {
+    return process.env.FRONTEND_URL || 'https://expense-tracker-cicd-pearl.vercel.app';
   }
+  return process.env.FRONTEND_URL || 'http://localhost:5173';
 };
 
-const transporter = createTransporter();
+// Create transporter instance
+const transporter = createGmailTransporter();
 
-// FIXED: Environment-aware verification email
+// Send verification email
 const sendVerificationEmail = async (email, verificationToken) => {
   try {
-    console.log('🔍 Email Debug Info:', {
-      nodeEnv: process.env.NODE_ENV,
-      emailFrom: process.env.EMAIL_FROM,
-      resendKey: process.env.RESEND_API_KEY ? 'Set' : 'Not Set',
-      frontendUrl: emailConfig.frontendUrl,
-      service: emailConfig.service,
-      host: emailConfig.host,
-      recipient: email,
-    });
-    // Dynamic URL based on environment
-    const verificationUrl = `${emailConfig.frontendUrl}/verify-email/${verificationToken}`;
+    const frontendUrl = getFrontendUrl();
+    const verificationUrl = `${frontendUrl}/verify-email/${verificationToken}`;
     
     console.log(`📧 Sending verification email to: ${email}`);
     console.log(`🔗 Verification URL: ${verificationUrl}`);
+    console.log(`📮 Using Gmail account: ${process.env.EMAIL_USER}`);
     
     const mailOptions = {
-      from: process.env.EMAIL_FROM || 'noreply@yourapp.com',
+      from: `Expense Tracker <${process.env.EMAIL_USER}>`,
       to: email,
       subject: '🔐 Verify Your Email - Expense Tracker',
       html: `
@@ -139,28 +102,69 @@ const sendVerificationEmail = async (email, verificationToken) => {
       `
     };
 
-    console.log('📧 Attempting to send email with options:', {
-      from: mailOptions.from,
-      to: mailOptions.to,
-      subject: mailOptions.subject
-    });
-
     const result = await transporter.sendMail(mailOptions);
     console.log('✅ Verification email sent successfully:', result.messageId);
     return { success: true, messageId: result.messageId };
     
   } catch (error) {
-    // console.error('❌ Failed to send verification email:', error);
-    console.error('❌ Email error details:', {
-      message: error.message,
-      code: error.code,
-      response: error.response,
-      stack: error.stack
-    });
+    console.error('❌ Failed to send verification email:', error);
+    
+    // Check for common Gmail errors
+    if (error.code === 'EAUTH') {
+      console.error('🔐 Gmail authentication failed. Check EMAIL_USER and EMAIL_PASS');
+    } else if (error.responseCode === 535) {
+      console.error('🔐 Gmail credentials invalid or app password needed');
+    }
+    
     throw new Error('Failed to send verification email');
   }
 };
 
+// Send password reset email (for future use)
+const sendPasswordResetEmail = async (email, resetToken) => {
+  try {
+    const frontendUrl = getFrontendUrl();
+    const resetUrl = `${frontendUrl}/reset-password/${resetToken}`;
+    
+    const mailOptions = {
+      from: `Expense Tracker <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: '🔑 Reset Your Password - Expense Tracker',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2>Password Reset Request</h2>
+          <p>Click the link below to reset your password:</p>
+          <a href="${resetUrl}" style="background-color: #10b981; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">
+            Reset Password
+          </a>
+          <p>This link will expire in 1 hour.</p>
+          <p>If you didn't request this, please ignore this email.</p>
+        </div>
+      `
+    };
+
+    await transporter.sendMail(mailOptions);
+    return { success: true };
+  } catch (error) {
+    console.error('Failed to send password reset email:', error);
+    throw error;
+  }
+};
+
+// Test email configuration
+const testEmailConfiguration = async () => {
+  try {
+    await transporter.verify();
+    console.log('✅ Gmail configuration is valid');
+    return true;
+  } catch (error) {
+    console.error('❌ Gmail configuration error:', error);
+    return false;
+  }
+};
+
 module.exports = {
-  sendVerificationEmail
+  sendVerificationEmail,
+  sendPasswordResetEmail,
+  testEmailConfiguration
 };
