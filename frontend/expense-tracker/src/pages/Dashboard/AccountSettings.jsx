@@ -98,7 +98,7 @@ const AccountSettings = () => {
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-3">
+                  {/* <div className="flex items-center gap-3">
                     <LuShield className="text-gray-400" size={20} />
                     <div>
                       <p className="text-sm text-gray-500">Account Status</p>
@@ -117,7 +117,7 @@ const AccountSettings = () => {
                         )}
                       </div>
                     </div>
-                  </div>
+                  </div> */}
                 </div>
               </div>
             </div>

@@ -37,7 +37,7 @@ app.use('/api/v1/expense', expenseRoutes)
 app.use('/api/v1/dashboard', dashboardRoutes)
 app.use('/api/v1/budget', budgetRoutes);
 
-startCleanupJobs();
+// startCleanupJobs();
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
