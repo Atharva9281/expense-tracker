@@ -140,48 +140,6 @@ Fintastic is a comprehensive personal finance management application that helps 
 - **Export Functionality** for comprehensive financial reports
 - **Secure Authentication** with JWT-based user management
 
-## 🔧 API Documentation
-
-### 🔐 Authentication Endpoints
-```
-POST   /api/v1/auth/register     # Create new user account
-POST   /api/v1/auth/login        # User authentication and token generation
-GET    /api/v1/auth/profile      # Retrieve user profile information
-PUT    /api/v1/auth/profile      # Update user profile details
-DELETE /api/v1/auth/delete       # Permanently delete user account
-```
-
-### 💰 Income Management
-```
-GET    /api/v1/income            # Retrieve all income records
-POST   /api/v1/income            # Create new income entry
-PUT    /api/v1/income/:id        # Update existing income record
-DELETE /api/v1/income/:id        # Delete income record
-```
-
-### 💸 Expense Management
-```
-GET    /api/v1/expense           # Retrieve all expense records
-POST   /api/v1/expense           # Create new expense entry
-PUT    /api/v1/expense/:id       # Update existing expense record
-DELETE /api/v1/expense/:id       # Delete expense record
-```
-
-### 🎯 Budget Management
-```
-GET    /api/v1/budget            # Retrieve all budget records
-POST   /api/v1/budget            # Create new budget plan
-PUT    /api/v1/budget/:id        # Update existing budget
-DELETE /api/v1/budget/:id        # Delete budget plan
-GET    /api/v1/budget/analysis   # Get detailed budget analytics
-```
-
-### 📊 Analytics & Reporting
-```
-GET    /api/v1/dashboard         # Dashboard overview data
-GET    /api/v1/analytics         # Comprehensive financial analytics
-```
-
 ## 🎯 Feature Deep Dive
 
 ### 📊 **Intelligent Dashboard**
@@ -203,16 +161,15 @@ GET    /api/v1/analytics         # Comprehensive financial analytics
 - Advanced filtering and search with multiple criteria
 
 ### 🎯 **Comprehensive Budget Planning**
-- Flexible budget creation for various time periods (weekly, monthly, yearly)
+- Flexible budget creation for various time periods (monthly, yearly)
 - Real-time spending tracking against budget allocations
 - Smart alert system for budget limits and overspending warnings
 - Budget vs actual analysis with detailed variance reports
 
 ### 📈 **Advanced Analytics**
-- Spending pattern analysis with behavioral insights
-- Category-wise breakdowns with percentage distributions
-- Export functionality to Excel, CSV, and PDF formats
-- Custom date range reports with comparative analysis
+- Spending pattern analysis 
+- Category-wise breakdowns 
+- Export functionality to Excel
 
 ## 🔐 Security & Performance
 
