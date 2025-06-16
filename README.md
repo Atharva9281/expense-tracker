@@ -6,12 +6,6 @@
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Vercel-brightgreen?style=for-the-badge&logo=vercel)](https://expense-tracker-cicd-pearl.vercel.app)
 
-![React](https://img.shields.io/badge/React-18.0-61DAFB?style=flat&logo=react)
-![Node.js](https://img.shields.io/badge/Node.js-18.0-339933?style=flat&logo=node.js)
-![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248?style=flat&logo=mongodb)
-![Express](https://img.shields.io/badge/Express.js-4.x-000000?style=flat&logo=express)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-3.x-06B6D4?style=flat&logo=tailwindcss)
-
 </div>
 
 ## 🚀 Overview
@@ -40,17 +34,6 @@ Fintastic is a comprehensive personal finance management application that helps 
 *Modern MERN stack with REST API architecture*
 
 </div>
-
-### Architecture Overview
-
-```
-┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
-│    Users    │───▶│   Vercel    │───▶│   Render    │───▶│  MongoDB    │
-│ 👥 Web/Mobile│    │  (Frontend) │    │  (Backend)  │    │   Atlas     │
-│             │    │ React + Vite│    │  Express.js │    │  Database   │
-│             │    │     CDN     │    │ REST API    │    │             │
-└─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘
-```
 
 ### Why This Architecture Matters
 
@@ -149,10 +132,6 @@ Fintastic is a comprehensive personal finance management application that helps 
 5. **Access the application**
    - 🌐 Frontend: http://localhost:5173
    - 🔗 Backend API: http://localhost:8000
-
-## 📊 Live Demo & Features
-
-Experience the full application at **[expense-tracker-cicd-pearl.vercel.app](https://expense-tracker-cicd-pearl.vercel.app)**
 
 ### 🎯 Key Highlights
 - **Real-time Dashboard** with interactive charts and financial insights
