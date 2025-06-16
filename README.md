@@ -21,7 +21,7 @@ Fintastic is a comprehensive personal finance management application that helps 
 - 📱 **Mobile Responsive** - Beautiful UI that works on all devices
 - 🔐 **Secure Authentication** - JWT-based user authentication
 - 📈 **Data Visualization** - Interactive charts powered by Recharts
-- 📊 **Export Functionality** - Download reports as Excel/CSV
+- 📊 **Export Functionality** - Download reports as Excel
 - ⚡ **Real-time Updates** - Instant data synchronization
 - 🎨 **Modern UI/UX** - Clean design with smooth animations
 
@@ -157,7 +157,7 @@ Fintastic is a comprehensive personal finance management application that helps 
 ### 💸 **Smart Expense Management**
 - Intelligent expense categorization with machine learning suggestions
 - Receipt capture and storage with image optimization
-- Bulk import functionality from CSV/Excel files
+- Bulk import functionality from Excel files
 - Advanced filtering and search with multiple criteria
 
 ### 🎯 **Comprehensive Budget Planning**
