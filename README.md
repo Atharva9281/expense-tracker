@@ -29,7 +29,7 @@ Fintastic is a comprehensive personal finance management application that helps 
 
 <div align="center">
 
-[![Fintastic Architecture](./docs/architecture.png)](https://github.com/Atharva9281/expense-tracker/blob/4959b4e9f31ee3cf7185889d1a5ce1267fe217bf/System%20Architecture.png)
+![Fintastic Architecture](./System%20Architecture.png)
 
 *Modern MERN stack with REST API architecture*
 
