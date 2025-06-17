@@ -4,7 +4,7 @@
 
 **A modern, full-stack expense tracking application built with the MERN stack**
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-Vercel-brightgreen?style=for-the-badge&logo=vercel)](https://expense-tracker-cicd-pearl.vercel.app)
+[[![Live Demo](https://img.shields.io/badge/Live%20Demo-Vercel-brightgreen?style=for-the-badge&logo=vercel)](https://expense-tracker-cicd-pearl.vercel.app)](https://github.com/Atharva9281/expense-tracker/blob/578550ca66944ffce71f2a6d42050972b0269ca8/System%20Architecture.png)
 
 </div>
 
