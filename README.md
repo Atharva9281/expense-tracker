@@ -189,7 +189,7 @@ Fintastic is a comprehensive personal finance management application that helps 
 
 | **4.0s** | **200ms** | **99.9%** | **Auto** |
 |----------|-----------|-----------|----------|
-| Mobile Load Time* | API Response | System Uptime | Scaling |
+| Load Time | API Response | System Uptime | Scaling |
 
 ## 🚀 Deployment & DevOps
 
